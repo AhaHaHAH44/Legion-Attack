@@ -1,13 +1,16 @@
 // ==UserScript==
 // @name         Legion - Обстрел
-// @namespace    legion-fun
+// @namespace    https://github.com/ТВОЙ_НИК/Legion-Attack
 // @version      1.2
-// @description  Обстрел с упоминаниями и настройкой вариантов сообщений
+// @description  Добавляет кнопки быстрого упоминания пользователей в чате Multidonate. Поддерживает собственные варианты сообщений.
+// @author       Sectwi1l
+// @homepageURL  https://github.com/ТВОЙ_НИК/Legion-Attack
+// @supportURL   https://github.com/ТВОЙ_НИК/Legion-Attack/issues
+// @updateURL    https://raw.githubusercontent.com/ТВОЙ_НИК/Legion-Attack/main/Legion_Attack.user.js
+// @downloadURL  https://raw.githubusercontent.com/ТВОЙ_НИК/Legion-Attack/main/Legion_Attack.user.js
 // @match        https://play.multidonate.ru/*
 // @run-at       document-idle
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/AhaHaHAH44/Legion-Attack/main/Legion_Attack.user.js
-// @downloadURL  https://raw.githubusercontent.com/AhaHaHAH44/Legion-Attack/main/Legion_Attack.user.js
 // ==/UserScript==
 
 (() => {
