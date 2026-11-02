@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Legion - Обстрел
-// @namespace    https://github.com/ТВОЙ_НИК/Legion-Attack
-// @version      1.2
-// @description  Добавляет кнопки быстрого упоминания пользователей в чате Multidonate. Поддерживает собственные варианты сообщений.
+// @namespace    https://github.com/AhaHaHAHA44/Legion-Attack
+// @version      1.3
+// @description  Добавляет кнопки упоминания пользователей в Multidonate. Поддерживает именованные варианты сообщений.
 // @author       Sectwi1l
-// @homepageURL  https://github.com/ТВОЙ_НИК/Legion-Attack
-// @supportURL   https://github.com/ТВОЙ_НИК/Legion-Attack/issues
-// @updateURL    https://raw.githubusercontent.com/ТВОЙ_НИК/Legion-Attack/main/Legion_Attack.user.js
-// @downloadURL  https://raw.githubusercontent.com/ТВОЙ_НИК/Legion-Attack/main/Legion_Attack.user.js
+// @homepageURL  https://github.com/AhaHaHAHA44/Legion-Attack
+// @supportURL   https://github.com/AhaHaHAHA44/Legion-Attack/issues
+// @updateURL    https://raw.githubusercontent.com/AhaHaHAH44/Legion-Attack/main/Legion_Attack.user.js
+// @downloadURL  https://raw.githubusercontent.com/AhaHaHAH44/Legion-Attack/main/Legion_Attack.user.js
 // @match        https://play.multidonate.ru/*
 // @run-at       document-idle
 // @grant        none
@@ -24,7 +24,10 @@
     const STORAGE_KEY = 'legion_attack_messages';
 
     const DEFAULT_MESSAGES = [
-        'ОБСТРЕЛ!!! Kappa KEKW PepeLaugh'
+        {
+            name: 'Обстрел',
+            text: 'ОБСТРЕЛ!!! Kappa KEKW PepeLaugh'
+        }
     ];
 
     let messages = loadMessages();
@@ -35,11 +38,29 @@
             const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
 
             if (Array.isArray(saved) && saved.length) {
-                return saved.filter(x => typeof x === 'string');
+                // Совместимость со старым форматом, где хранились только строки.
+                return saved
+                    .filter(item => typeof item === 'string' ||
+                        (item && typeof item === 'object'))
+                    .map((item, index) => {
+                        if (typeof item === 'string') {
+                            return {
+                                name: `Вариант ${index + 1}`,
+                                text: item
+                            };
+                        }
+
+                        return {
+                            name: typeof item.name === 'string' && item.name.trim()
+                                ? item.name
+                                : `Вариант ${index + 1}`,
+                            text: typeof item.text === 'string' ? item.text : ''
+                        };
+                    });
             }
         } catch (e) {}
 
-        return [...DEFAULT_MESSAGES];
+        return DEFAULT_MESSAGES.map(item => ({ ...item }));
     }
 
     function saveMessages() {
@@ -70,7 +91,7 @@
             return;
         }
 
-        const message = messages[activeIndex] ?? '';
+        const message = messages[activeIndex]?.text ?? '';
 
         if (!message.trim()) {
             alert('Сначала напиши текст сообщения!');
@@ -226,6 +247,27 @@
         </div>
 
         <div style="margin-bottom:6px;color:#aaa;">
+            Название варианта:
+        </div>
+
+        <input id="legion-variant-name"
+            type="text"
+            maxlength="40"
+            placeholder="Например: Приветствие"
+            style="
+                box-sizing:border-box;
+                width:100%;
+                margin-bottom:10px;
+                padding:7px;
+                background:rgba(12, 14, 23, 0.62);
+                color:#e0e3ed;
+                border:1px solid rgba(160, 168, 190, 0.32);
+                border-radius:4px;
+                font-family:Arial,sans-serif;
+                font-size:12px;
+            ">
+
+        <div style="margin-bottom:6px;color:#aaa;">
             Текст сообщения:
         </div>
 
@@ -272,7 +314,7 @@
         </div>
 
         <div style="margin-top:8px;color:#888;font-size:10px;">
-            Ник и @ добавляются автоматически.
+            Ник и @ добавляются автоматически. Названия видны только в этом меню.
         </div>
     `;
 
@@ -292,6 +334,7 @@
         }
 
         #legion-attack-settings select,
+        #legion-attack-settings input,
         #legion-attack-settings textarea {
             background: rgba(12, 14, 23, 0.62) !important;
             color: #e0e3ed !important;
@@ -322,6 +365,7 @@
     document.body.appendChild(panel);
 
     const select = panel.querySelector('#legion-variants');
+    const nameInput = panel.querySelector('#legion-variant-name');
     const textarea = panel.querySelector('#legion-message');
 
     function renderVariants() {
@@ -331,13 +375,14 @@
             const option = document.createElement('option');
 
             option.value = index;
-            option.textContent = `Вариант ${index + 1}`;
+            option.textContent = message.name.trim() || `Вариант ${index + 1}`;
 
             select.appendChild(option);
         });
 
         select.value = activeIndex;
-        textarea.value = messages[activeIndex] ?? '';
+        nameInput.value = messages[activeIndex]?.name ?? '';
+        textarea.value = messages[activeIndex]?.text ?? '';
     }
 
     // =====================================
@@ -350,11 +395,28 @@
     });
 
     // =====================================
+    // ИЗМЕНЕНИЕ НАЗВАНИЯ
+    // =====================================
+
+    nameInput.addEventListener('input', () => {
+        messages[activeIndex].name = nameInput.value;
+
+        const option = select.options[activeIndex];
+
+        if (option) {
+            option.textContent = nameInput.value.trim() ||
+                `Вариант ${activeIndex + 1}`;
+        }
+
+        saveMessages();
+    });
+
+    // =====================================
     // ИЗМЕНЕНИЕ ТЕКСТА
     // =====================================
 
     textarea.addEventListener('input', () => {
-        messages[activeIndex] = textarea.value;
+        messages[activeIndex].text = textarea.value;
         saveMessages();
     });
 
@@ -363,11 +425,18 @@
     // =====================================
 
     panel.querySelector('#legion-add').addEventListener('click', () => {
-        messages.push('');
+        messages.push({
+            name: `Вариант ${messages.length + 1}`,
+            text: ''
+        });
+
         activeIndex = messages.length - 1;
 
         saveMessages();
         renderVariants();
+
+        nameInput.focus();
+        nameInput.select();
     });
 
     // =====================================
@@ -392,7 +461,8 @@
     // =====================================
 
     panel.querySelector('#legion-save').addEventListener('click', () => {
-        messages[activeIndex] = textarea.value;
+        messages[activeIndex].name = nameInput.value;
+        messages[activeIndex].text = textarea.value;
 
         saveMessages();
         panel.style.display = 'none';
